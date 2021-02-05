@@ -17,6 +17,18 @@ pip install xlsxwriter
 pip install sklearn
 ```
 
+Once this is done, run the following command and follow the instructions of the terminal according to your wishes:
+
+```sh
+python main.py
+```
+
+In Linux or MacOS, you might have to type instead:
+
+```sh
+python3 main.py
+```
+
 **Warning:** _This project has been fully developed in python 3.9, so its operation for previous versions is not guaranteed._
 
 ## Extra sections

@@ -282,9 +282,9 @@ print ("Goles anotados en casa:" + str(data['THG'].values[len(data)-1]))
 '''
 
 #print(tabulate(data, headers='keys', tablefmt='fancy_grid'))
-writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
+writer = pd.ExcelWriter("trainingData/output.xlsx", engine='xlsxwriter')
 data.to_excel(writer, index = False, header=True, sheet_name='Sheet1')  
-data.to_csv("output.csv", index = False, header=True)  
+data.to_csv("trainingData/output.csv", index = False, header=True)  
 
 workbook  = writer.book
 worksheet = writer.sheets['Sheet1']
@@ -335,7 +335,7 @@ for team in teams:
 			if data['AM'].values[x]!=0 and data['P2'].values[x]!=0:
 				elog = elog + 0.7*(data['FTAG'].values[x] - (data['TAG'].values[x]+data['TG2'].values[x])/2)
 
-writer = pd.ExcelWriter("outputMedias.xlsx", engine='xlsxwriter')
+writer = pd.ExcelWriter("trainingData/outputMeans.xlsx", engine='xlsxwriter')
 data.to_excel(writer, index = False, header=True, sheet_name='Sheet1')  
 
 workbook  = writer.book

@@ -1,7 +1,6 @@
 import pandas as pd
 from tkinter import *
 
-
 class Team:   
 
     def __init__(self, name:str):           

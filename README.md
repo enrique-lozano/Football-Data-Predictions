@@ -1,28 +1,23 @@
-# Football-Data-Predictions
+# Football-Data-Predictions ⚽🔍
 
-Brief description of a few lines about the project, technologies used in the development... Use emoticons in each of the readMe titles, so that they correctly represent the section.
+Python script that shows statistics and predictions about different European soccer leagues using pandas and some AI techniques.
 
 ## Run it 🚀
 
-You could try our demo at https://link.com and that it's!
+First, run <code>git clone</code> or dowload the project in any directory of your machine. The data files are extracted from https://www.football-data.co.uk/data.php. **Data is not updated automatically**, so if you want to get current predictions and statistics you will have to manually enter these files in the project. The same goes for leagues/seasons that are not included in the project db folder. The only condition is that once this operation is done, you update the following line of code in the **_main.py_** file and put the location of your new file:
 
-To install the script you can put some basic commands like <code>git clone</code> in that way or:
+> data = pd.read_csv('db/your_file.csv')
 
-First way:
+Once you do that, you should install some dependencies via _pip_, in the case that you haven't installed them yet:
 
 ```sh
-npm install my-crazy-module --save
+pip install pandas
+pip install tkinter
+pip install xlsxwriter
+pip install sklearn
 ```
 
-Second way:
-
-> npm install my-crazy-module --save
-
-**If you want to highlight something important you just have to put it in bold** . Keep in mind that **bold can be done with a double low bar or with a double asterisk**
-
-Some warnings could be placed like this:
-
-**Warning:** _This is a cursive warning, using one asterisk._
+**Warning:** _This project has been fully developed in python 3.9, so its operation for previous versions is not guaranteed._
 
 ## Extra sections
 
@@ -59,7 +54,7 @@ make example2
 
 Feel free to improve and optimize the existing code. To contribute to the project, read the previous points carefully and do the next steps with the project:
 
-1. Fork it (<https://github.com/yourname/yourproject/fork>)
+1. Fork it
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)

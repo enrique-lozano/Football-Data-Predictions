@@ -5,12 +5,14 @@ from tkinter import *
 class Team:   
 
     def __init__(self, name:str):           
-        self.Name = name
+        self.name = name
         # ---- [H/A]X[F/A] -----
         # H: Home, A: Away | F: For, A: Against
         # ---------------------- 
         self.HM = 0   # Matches
         self.AM = 0
+        self.HP = 0
+        self.AP = 0
         self.HGF = 0  # Goals
         self.HGA = 0
         self.AGF = 0
@@ -48,6 +50,7 @@ class Team:
     # Dynamic parameters
     def updateParameters(self):
         self.M = self.HM + self.AM
+        self.Pts = self.HP + self.AP
         self.GF = self.HGF + self.AGF
         self.GA = self.HGA + self.AGA
         self.SF = self.HSF + self.ASF
@@ -71,7 +74,7 @@ print ("--------------------\n")
 
 data = pd.read_csv('db/2020/E0.csv')
 #data = pd.read_csv('input2.csv')
-#data3 = pd.read_csv('input3.csv')
+#data2 = pd.read_csv('db/2020/SP1.csv')
 #data = data.merge(data2, how='outer')
 #data = data.merge(data3, how='outer')
 original_data = data
@@ -96,20 +99,20 @@ new_row[1] = "Real Madrid"
 data.loc[len(data)] = new_row
 '''
 
-#Partidos
+#Matches
 data['P1'] = 0
 data['P2'] = 0
 data['HM'] = 0
 data['AM'] = 0
 
-# A favor actuando como local
-# En contra actuando como local
-# A favor actuando como visitante
-# En contra actuando como visitante
-# Total (local+visitante) a favor del equipo que actua en el partido actual como local
-# Total (local+visitante) en contra del equipo que actua en el partido actual como local
-# Total (local+visitante) a favor del equipo que actua en el partido actual como visitante
-# Total (local+visitante) en contra del equipo que actua en el partido actual como visitante
+# For acting as a local                 -> THX
+# Against acting as a local             -> THXA
+# In favor acting as a visitor          -> TAX
+# Against acting as a visitor           -> TAXA
+# Total (home + away) in favor of the team that acts in the current match at home  -> TX1
+# Total (home + away) against the team that acts at home in the current match      -> TXA1
+# Total (home + away) in favor of the team that acts in the current match as away  -> TX2
+# Total (home + away) against the team that acts in the current match as away      -> TXA2
 
 # New columns to add to the dataframe. Will have the total stadistics off all teams until
 # the day of the match of the row. In the first match will be 0
@@ -195,6 +198,12 @@ for team in teams:
 			t.HYA = t.HYA + data['AY'].values[x]              
 			t.HRF = t.HRF + data['HR'].values[x]
 			t.HRA = t.HRA + data['AR'].values[x]
+
+			if data['FTR'].values[x] == 'H':
+				t.HP = t.HP + 3
+			elif data['FTR'].values[x] == 'D':
+				t.HP = t.HP + 1
+
 			t.updateParameters()
 
 		if team==data['AwayTeam'].values[x]:
@@ -252,6 +261,12 @@ for team in teams:
 			t.AYA = t.AYA + data['HY'].values[x]
 			t.ARF = t.ARF + data['AR'].values[x]
 			t.ARA = t.ARA + data['HR'].values[x]
+
+			if data['FTR'].values[x] == 'A':
+				t.AP = t.AP + 3
+			elif data['FTR'].values[x] == 'D':
+				t.AP = t.AP + 1
+
 			t.updateParameters()  
 	
 	teamsList.append(t)
@@ -261,9 +276,11 @@ df = pd.DataFrame([x.as_dict() for x in teamsList])
 print(df)
 '''
 
+'''
 print ("\n---------------------------------------------------------")
 print ("Team")
 print ("Goles anotados en casa:" + str(data['THG'].values[len(data)-1]))
+'''
 
 #print(tabulate(data, headers='keys', tablefmt='fancy_grid'))
 writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
@@ -329,79 +346,124 @@ worksheet.set_column(0, 1, 12)
 writer.save()
 
 '''---------------------------------------------
---------------MAKING THE MODEL------------------
+---------PRINT DIFFERENT STADISTICS-------------
 ------------------------------------------------'''
 
-#We eliminate the first games as they are not very representative for the training
-data = data.drop(range(0,91), axis=0) 
-for x in range(len(data.index)):
-	if data['HM'].values[x]<3 or data['P1'].values[x]<4 or data['AM'].values[x]<3 or data['P2'].values[x]<4:
-		data.drop(x, axis=0)
+def printTable(data, teamsList):
+	teamsList.sort(key=lambda x: x.Pts, reverse=True)
+	print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format("Pos","Name"," Pts", " M", " GF", " GA", " SF", " SA", " CF", " CA", " FF", " FA"))
+	print("---------------------------------------------------------------------------------")
+	for index,team in enumerate(teamsList, start=1):
+		print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format(index,team.name,team.Pts,team.M,team.GF,team.GA,team.SF,team.SA,team.CF,team.CA,team.FF,team.FA))
 
-#Variable to predict. Dependent variable
-Y = data['FTHG'].values
-Y = Y.astype('int')
-Y2 = data['FTAG'].values
-Y2 = Y2.astype('int')
+	print("")
 
-#Indepiendent variables
-X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','THS','TAS','THSA','TASA','TS1','TS2','TSA1','TSA2',
-'THST','TAST','THSTA','TASTA','TST1','TST2','TSTA1','TSTA2','THC','TAC','THCA','TACA','TC1','TC2','TCA1','TCA2',
-'THF','TAF','THFA','TAFA','TF1','TF2','TFA1','TFA2','THY','TAY','THYA','TAYA','TY1','TY2','TYA1','TYA2',
-'THR','TAR','THRA','TARA','TR1','TR2','TRA1','TRA2','ELOG1','ELOG2','LG1','LG2']]
-#X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','ELOG1', 'ELOG2','LG1','LG2']]
-X2 = X
-print("\n ---------------------------------")
-print("Making random forest.............")
+def printHomeTable(data, teamList):
+	teamsList.sort(key=lambda x: x.HP, reverse=True)
+	print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format("Pos","Name"," Pts", " M", " GF", " GA", " SF", " SA", " CF", " CA", " FF", " FA"))
+	print("---------------------------------------------------------------------------------")
+	for index,team in enumerate(teamsList, start=1):
+		print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format(index,team.name,team.HP,team.HM,team.HGF,team.HGA,team.HSF,team.HSA,team.HCF,team.HCA,team.HFF,team.HFA))
 
-#Split data into train and test datasets
-from sklearn.model_selection import train_test_split
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.06, random_state=20)
-X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.06, random_state=20)
+	print("")
 
-from sklearn.ensemble import RandomForestRegressor
-model = RandomForestRegressor(n_estimators=180, min_samples_leaf=2, min_samples_split=3, random_state=20)
+def printAwayTable(data, teamList):
+	teamsList.sort(key=lambda x: x.AP, reverse=True)
+	print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format("Pos","Name"," Pts", " M", " GF", " GA", " SF", " SA", " CF", " CA", " FF", " FA"))
+	print("---------------------------------------------------------------------------------")
+	for index,team in enumerate(teamsList, start=1):
+		print("{0:3} | {1:18}|{2:4} | {3:2} {4:3} {5:3} {6:3} {7:3} {8:3} {9:3} {10:3} {11:3}".format(index,team.name,team.AP,team.AM,team.AGF,team.AGA,team.ASF,team.ASA,team.ACF,team.ACA,team.AFF,team.AFA))
 
-model.fit(X_train, Y_train)
-prediction_test = model.predict(X_test) #Results of the predictions in a list[]
+	print("")
 
-model.fit(X2_train, Y2_train)
-prediction_test2 = model.predict(X2_test)
 
-from sklearn import metrics
-print ("Mean squared error H= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test),2)), "%")
-print ("Mean absolute error H= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
-print ("Mean squared error A= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2),2)), "%")
-print ("Mean absolute error A= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+def printAllTables(data, teamList):
+	print("HOME TABLE:\n")
+	printHomeTable(data, teamsList)
+	print("AWAY TABLE:\n")
+	printAwayTable(data, teamsList)
+	print("TOTAL TABLE:\n")
+	printTable(data, teamsList)
 
-#Creating new dataframe to print the predictions
-matches_prediction = []
-i=0
-for row in X_test.index:
-	match_data = []
-	match_data.append(original_data['HomeTeam'].values[row])
-	match_data.append(original_data['AwayTeam'].values[row])
-	match_data.append(prediction_test[i])
-	match_data.append(prediction_test2[i])
-	match_data.append(Y_test[i])
-	match_data.append(Y2_test[i])
-	match_data = tuple(match_data)
-	matches_prediction.append(match_data)
-	i=i+1
+'''---------------------------------------------
+---------MAKING THE DIFFERENT MODELS------------
+------------------------------------------------'''
 
-df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
-print (df_prediction)
+def randomForest(data):
+	#We eliminate the first games as they are not very representative for the training
+	data = data.drop(range(0,91), axis=0) 
+	for x in range(len(data.index)):
+		if data['HM'].values[x]<3 or data['P1'].values[x]<4 or data['AM'].values[x]<3 or data['P2'].values[x]<4:
+			data.drop(x, axis=0)
 
-#print best attributes
-print("\nBest Attributes:")
-feature_list = list(X.columns)
-features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
-print(features_imp.head())
-print("\nWorst Attributes:")
-print(features_imp.tail())
+	#Variable to predict. Dependent variable
+	Y = data['FTHG'].values
+	Y = Y.astype('int')
+	Y2 = data['FTAG'].values
+	Y2 = Y2.astype('int')
 
-print("----------------------------------------")
-print("----------------ENDING------------------")
-print("----------------------------------------")
+	#Indepiendent variables
+	X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','THS','TAS','THSA','TASA','TS1','TS2','TSA1','TSA2',
+	'THST','TAST','THSTA','TASTA','TST1','TST2','TSTA1','TSTA2','THC','TAC','THCA','TACA','TC1','TC2','TCA1','TCA2',
+	'THF','TAF','THFA','TAFA','TF1','TF2','TFA1','TFA2','THY','TAY','THYA','TAYA','TY1','TY2','TYA1','TYA2',
+	'THR','TAR','THRA','TARA','TR1','TR2','TRA1','TRA2','ELOG1','ELOG2','LG1','LG2']]
+	#X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','ELOG1', 'ELOG2','LG1','LG2']]
+	X2 = X
+	print("\n ---------------------------------")
+	print("Making random forest.............")
 
-#data = data[:-10]
+	#Split data into train and test datasets
+	from sklearn.model_selection import train_test_split
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.06, random_state=20)
+	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.06, random_state=20)
+
+	from sklearn.ensemble import RandomForestRegressor
+	model = RandomForestRegressor(n_estimators=180, min_samples_leaf=2, min_samples_split=3, random_state=20)
+
+	model.fit(X_train, Y_train)
+	prediction_test = model.predict(X_test) #Results of the predictions in a list[]
+
+	model.fit(X2_train, Y2_train)
+	prediction_test2 = model.predict(X2_test)
+
+	from sklearn import metrics
+	print ("Mean squared error H= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test),2)), "%")
+	print ("Mean absolute error H= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
+	print ("Mean squared error A= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2),2)), "%")
+	print ("Mean absolute error A= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+
+	#Creating new dataframe to print the predictions
+	matches_prediction = []
+	i=0
+	for row in X_test.index:
+		match_data = []
+		match_data.append(original_data['HomeTeam'].values[row])
+		match_data.append(original_data['AwayTeam'].values[row])
+		match_data.append(prediction_test[i])
+		match_data.append(prediction_test2[i])
+		match_data.append(Y_test[i])
+		match_data.append(Y2_test[i])
+		match_data = tuple(match_data)
+		matches_prediction.append(match_data)
+		i=i+1
+
+	df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
+	print (df_prediction)
+
+	#print best attributes
+	print("\nBest Attributes:")
+	feature_list = list(X.columns)
+	features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
+	print(features_imp.head())
+	print("\nWorst Attributes:")
+	print(features_imp.tail())
+
+	print("----------------------------------------")
+	print("----------------ENDING------------------")
+	print("----------------------------------------")
+
+	#data = data[:-10]
+
+
+
+printAllTables(data, teamsList)

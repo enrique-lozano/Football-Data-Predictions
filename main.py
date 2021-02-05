@@ -426,10 +426,10 @@ def randomForest(data):
 	prediction_test2 = model.predict(X2_test)
 
 	from sklearn import metrics
-	print ("Mean squared error H= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test),2)), "%")
-	print ("Mean absolute error H= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
-	print ("Mean squared error A= ", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2),2)), "%")
-	print ("Mean absolute error A= ", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+	print ("Mean sq. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test),2)), "%")
+	print ("Mean abs. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
+	print ("Mean sq. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2),2)), "%")
+	print ("Mean abs. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
 
 	#Creating new dataframe to print the predictions
 	matches_prediction = []
@@ -465,4 +465,5 @@ def randomForest(data):
 
 
 
-printAllTables(data, teamsList)
+printTable(data, teamsList)
+randomForest(data)

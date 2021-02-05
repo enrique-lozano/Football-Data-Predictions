@@ -76,8 +76,11 @@ data = pd.read_csv('db/2020/E0.csv')
 #data = data.merge(data3, how='outer')
 original_data = data
 
-eliminate = [0,1,2] #eliminate division, date and time
-for x in range(24, len(data.columns)):
+# Delete non-important attributes
+eliminate = [0,1,2] # Division, date and time
+if 'Referee' in data.columns:
+	data = data.drop(['Referee'], axis=1)
+for x in range(23, len(data.columns)):
 	eliminate.append(x)
 
 #data.drop(['B365CA', 'B365CH', 'B365CD', '', '', '', ''], axis=1)
@@ -132,87 +135,50 @@ teams.sort()
 teamsList = []
 
 for team in teams:
-	matches = 0
-	home_matches = 0
-	away_matches = 0
-	home_goals = 0
-	home_goals_against = 0
-	away_goals = 0
-	away_goals_against = 0
-	home_shots = 0
-	home_shots_against = 0
-	away_shots = 0
-	away_shots_against = 0
-	home_shotsT = 0
-	home_shotsT_against = 0
-	away_shotsT = 0
-	away_shotsT_against = 0
-	home_corners = 0
-	home_corners_against = 0
-	away_corners = 0
-	away_corners_against = 0
-	home_faults = 0
-	home_faults_against = 0
-	away_faults = 0
-	away_faults_against = 0
-	home_yellows = 0
-	home_yellows_against = 0
-	away_yellows = 0
-	away_yellows_against = 0
-	home_reds = 0
-	home_reds_against = 0
-	away_reds = 0
-	away_reds_against = 0
 
-	t = Team(team) # Create new object team
+	t = Team(team) # Create new team object
+	t.updateParameters()
+
 	for x in range(len(data.index)):
 		if team==data['HomeTeam'].values[x]:
-			data['P1'].values[x] = matches
-			data['HM'].values[x] = home_matches
-			home_matches = home_matches + 1
-			matches = matches + 1
-			data['THG'].values[x] = home_goals
-			data['THGA'].values[x] = home_goals_against
-			data['TG1'].values[x] = home_goals + away_goals
-			data['TGA1'].values[x] = home_goals_against + away_goals_against
-			home_goals = home_goals + data['FTHG'].values[x]
-			home_goals_against = home_goals_against + data['FTAG'].values[x]
-			data['THS'].values[x] = home_shots
-			data['THSA'].values[x] = home_shots_against
-			data['TS1'].values[x] = home_shots + away_shots
-			data['TSA1'].values[x] = home_shots_against + away_shots_against
-			home_shots = home_shots + data['HS'].values[x]
-			home_shots_against = home_shots_against + data['AS'].values[x]
-			data['THST'].values[x] = home_shotsT
-			data['THSTA'].values[x] = home_shotsT_against
-			data['TST1'].values[x] = home_shotsT + away_shotsT
-			data['TSTA1'].values[x] = home_shotsT_against + away_shotsT_against
-			home_shotsT = home_shotsT + data['HST'].values[x]
-			home_shotsT_against = home_shotsT_against + data['AST'].values[x]
-			data['THC'].values[x] = home_corners
-			data['THCA'].values[x] = home_corners_against
-			data['TC1'].values[x] = home_corners + away_corners
-			data['TCA1'].values[x] = home_corners_against + away_corners_against
-			home_corners = home_corners + data['HC'].values[x]
-			home_corners_against = home_corners_against + data['AC'].values[x]
-			data['THF'].values[x] = home_faults
-			data['THFA'].values[x] = home_faults_against
-			data['TF1'].values[x] = home_faults + away_faults
-			data['TFA1'].values[x] = home_faults_against + away_faults_against
-			home_faults = home_faults + data['HF'].values[x]
-			home_faults_against = home_faults_against + data['AF'].values[x]
-			data['THY'].values[x] = home_yellows
-			data['THYA'].values[x] = home_yellows_against
-			data['TY1'].values[x] = home_yellows + away_yellows
-			data['TYA1'].values[x] = home_yellows_against + away_yellows_against
-			home_yellows = home_yellows + data['HY'].values[x]
-			home_yellows_against = home_yellows_against + data['AY'].values[x]
-			data['THR'].values[x] = home_reds
-			data['THRA'].values[x] = home_reds_against
-			data['TR1'].values[x] = home_reds + away_reds
-			data['TRA1'].values[x] = home_reds_against + away_reds_against
-			home_reds = home_reds + data['HR'].values[x]
-			home_reds_against = home_reds_against + data['AR'].values[x]
+			data['P1'].values[x] = t.M
+			data['HM'].values[x] = t.HM
+			
+			data['THG'].values[x] =  t.HGF
+			data['THGA'].values[x] = t.HGA
+			data['TG1'].values[x] =  t.GF
+			data['TGA1'].values[x] = t.GA
+
+			data['THS'].values[x] =  t.HSF
+			data['THSA'].values[x] = t.HSA
+			data['TS1'].values[x] =  t.SF
+			data['TSA1'].values[x] = t.SA
+
+			data['THST'].values[x] = t.HSTF
+			data['THSTA'].values[x] =t.HSTA
+			data['TST1'].values[x] = t.STF
+			data['TSTA1'].values[x] =t.STA
+
+			data['THC'].values[x] =  t.HCF
+			data['THCA'].values[x] = t.HCA
+			data['TC1'].values[x] =  t.CF
+			data['TCA1'].values[x] = t.CA
+
+			data['THF'].values[x] =  t.HFF
+			data['THFA'].values[x] = t.HFA
+			data['TF1'].values[x] =  t.FF
+			data['TFA1'].values[x] = t.FA
+
+			data['THY'].values[x] =  t.HYF
+			data['THYA'].values[x] = t.HYA
+			data['TY1'].values[x] =  t.YF
+			data['TYA1'].values[x] = t.YA
+
+			data['THR'].values[x] =  t.HRF
+			data['THRA'].values[x] = t.HRA
+			data['TR1'].values[x] =  t.RF
+			data['TRA1'].values[x] = t.RA
+
 
 			t.HM = t.HM + 1
 			t.HGF = t.HGF + data['FTHG'].values[x]
@@ -232,52 +198,44 @@ for team in teams:
 			t.updateParameters()
 
 		if team==data['AwayTeam'].values[x]:
-			data['P2'].values[x] = matches
-			data['AM'].values[x] = away_matches
-			away_matches = away_matches + 1
-			matches = matches + 1
-			data['TAG'].values[x] = away_goals
-			data['TAGA'].values[x] = away_goals_against
-			data['TG2'].values[x] = home_goals + away_goals
-			data['TGA2'].values[x] = home_goals_against + away_goals_against
-			away_goals = away_goals + data['FTAG'].values[x]
-			away_goals_against = away_goals_against + data['FTHG'].values[x]
-			data['TAS'].values[x] = away_shots
-			data['TASA'].values[x] = away_shots_against
-			data['TS2'].values[x] = home_shots + away_shots
-			data['TSA2'].values[x] = home_shots_against + away_shots_against
-			away_shots = away_shots + data['AS'].values[x]
-			away_shots_against = away_shots_against + data['HS'].values[x]
-			data['TAST'].values[x] = away_shotsT
-			data['TASTA'].values[x] = away_shotsT_against
-			data['TST2'].values[x] = home_shotsT + away_shotsT
-			data['TSTA2'].values[x] = home_shotsT_against + away_shotsT_against
-			away_shotsT = away_shotsT + data['AST'].values[x]
-			away_shotsT_against = away_shotsT_against + data['HST'].values[x]
-			data['TAC'].values[x] = away_corners
-			data['TACA'].values[x] = away_corners_against
-			data['TC2'].values[x] = home_corners + away_corners
-			data['TCA2'].values[x] = home_corners_against + away_corners_against
-			away_corners = away_corners + data['AC'].values[x]
-			away_corners_against = away_corners_against + data['HC'].values[x]
-			data['TAF'].values[x] = away_faults
-			data['TAFA'].values[x] = away_faults_against
-			data['TF2'].values[x] = home_faults + away_faults
-			data['TFA2'].values[x] = home_faults_against + away_faults_against
-			away_faults = away_faults + data['AF'].values[x]
-			away_faults_against = away_faults_against + data['HF'].values[x]
-			data['TAY'].values[x] = away_yellows
-			data['TAYA'].values[x] = away_yellows_against
-			data['TY2'].values[x] = home_yellows + away_yellows
-			data['TYA2'].values[x] = home_yellows_against + away_yellows_against
-			away_yellows = away_yellows + data['AY'].values[x]
-			away_yellows_against = away_yellows_against + data['HY'].values[x]
-			data['TAR'].values[x] = away_reds
-			data['TARA'].values[x] = away_reds_against
-			data['TR2'].values[x] = home_reds + away_reds
-			data['TRA2'].values[x] = home_reds_against + away_reds_against
-			away_reds = away_reds + data['AR'].values[x]
-			away_reds_against = away_reds_against + data['HR'].values[x]		
+			data['P2'].values[x] = t.M
+			data['AM'].values[x] = t.AM			
+			
+			data['TAG'].values[x] = t.AGF
+			data['TAGA'].values[x] =t.AGA
+			data['TG2'].values[x] = t.GF
+			data['TGA2'].values[x] =t.GA
+
+			data['TAS'].values[x] = t.ASF
+			data['TASA'].values[x] =t.ASA
+			data['TS2'].values[x] = t.SF
+			data['TSA2'].values[x] =t.SA
+
+			data['TAST'].values[x] =t.ASTF
+			data['TASTA'].values[x]=t.ASTA
+			data['TST2'].values[x] =t.STF
+			data['TSTA2'].values[x]=t.STA
+
+			data['TAC'].values[x] = t.ACF
+			data['TACA'].values[x] =t.ACA
+			data['TC2'].values[x] = t.CF
+			data['TCA2'].values[x] =t.CA
+
+			data['TAF'].values[x] = t.AFF
+			data['TAFA'].values[x] =t.AFA
+			data['TF2'].values[x] = t.FF
+			data['TFA2'].values[x] =t.FA
+
+			data['TAY'].values[x] = t.AYF
+			data['TAYA'].values[x] =t.AYA
+			data['TY2'].values[x] = t.YF
+			data['TYA2'].values[x] =t.YA
+
+			data['TAR'].values[x] = t.ARF
+			data['TARA'].values[x] =t.ARA
+			data['TR2'].values[x] = t.RF
+			data['TRA2'].values[x] =t.RA
+		
 			
 			t.AM = t.AM + 1
 			t.AGF = t.AGF + data['FTAG'].values[x]

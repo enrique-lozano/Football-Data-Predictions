@@ -1,3 +1,4 @@
+from numpy import delete
 import pandas as pd
 from tkinter import *
 
@@ -39,7 +40,9 @@ class Team:
         self.HRF = 0  # Red cars
         self.HRA = 0
         self.ARF = 0
-        self.ARA = 0    
+        self.ARA = 0
+        self.elog = 1.0 
+        self.LG = 0.0  
     
     # Convert to dict. 
     # Return -> {'name': self.name, 'M': self.M,...}
@@ -126,8 +129,6 @@ for atr in newAtr:
 	data[atr] = 0
 
 #Other ratings
-data['ELOG1'] = 0.0 #ELO rating in goals. data = data + (actual-medium)
-data['ELOG2'] = 0.0
 data['LG1'] = 0.0   #Last games results. data=data*0.5+POINTS     
 data['LG2'] = 0.0   #Last games results. data=data*0.5+POINTS   
 
@@ -181,6 +182,7 @@ for team in teams:
 			data['TR1'].values[x] =  t.RF
 			data['TRA1'].values[x] = t.RA
 
+			data['LG1'].values[x] =  t.LG
 
 			t.HM = t.HM + 1
 			t.HGF = t.HGF + data['FTHG'].values[x]
@@ -198,10 +200,14 @@ for team in teams:
 			t.HRF = t.HRF + data['HR'].values[x]
 			t.HRA = t.HRA + data['AR'].values[x]
 
+			p = -3
 			if data['FTR'].values[x] == 'H':
 				t.HP = t.HP + 3
+				p = 3
 			elif data['FTR'].values[x] == 'D':
 				t.HP = t.HP + 1
+				p = 1
+			t.LG = t.LG*0.8 + p
 
 			t.updateParameters()
 
@@ -243,7 +249,8 @@ for team in teams:
 			data['TARA'].values[x] =t.ARA
 			data['TR2'].values[x] = t.RF
 			data['TRA2'].values[x] =t.RA
-		
+
+			data['LG2'].values[x] =  t.LG
 			
 			t.AM = t.AM + 1
 			t.AGF = t.AGF + data['FTAG'].values[x]
@@ -261,11 +268,15 @@ for team in teams:
 			t.ARF = t.ARF + data['AR'].values[x]
 			t.ARA = t.ARA + data['HR'].values[x]
 
+			p = -3
 			if data['FTR'].values[x] == 'A':
 				t.AP = t.AP + 3
+				p = 3
 			elif data['FTR'].values[x] == 'D':
 				t.AP = t.AP + 1
-
+				p = 1
+			t.LG = t.LG*0.8 + p
+			
 			t.updateParameters()  
 	
 	teamsList.append(t)
@@ -281,7 +292,6 @@ print ("Team")
 print ("Goles anotados en casa:" + str(data['THG'].values[len(data)-1]))
 '''
 
-#print(tabulate(data, headers='keys', tablefmt='fancy_grid'))
 writer = pd.ExcelWriter("trainingData/output.xlsx", engine='xlsxwriter')
 data.to_excel(writer, index = False, header=True, sheet_name='Sheet1')  
 data.to_csv("trainingData/output.csv", index = False, header=True)  
@@ -292,7 +302,7 @@ worksheet.set_column(2, 80, 5)
 worksheet.set_column(0, 1, 12)
 writer.save()
 
-#Coger las medias
+#Get the means
 for atr in newAtr:
 	if atr[0]=='T' and atr[1]=='H':
 		data[atr] = data[atr]/data['HM']
@@ -303,38 +313,8 @@ for atr in newAtr:
 	if atr[-1]=='2':
 		data[atr] = data[atr]/data['P2']
 
-
-data = data.fillna(0)
-
-for team in teams:
-	elog = 1.0
-	LG = 0.0
-	for x in range(len(data.index)):
-		if team==data['HomeTeam'].values[x]:
-			points = 1
-			if data['FTR'].values[x] == 'A':
-				points = -3
-			if data['FTR'].values[x] == 'H':
-				points = 3
-			data['LG1'].values[x] =  LG
-			LG = LG*0.8 + points
-
-			data['ELOG1'].values[x] = elog
-			if data['HM'].values[x]!=0 and data['P1'].values[x]!=0:
-				elog = elog + 0.7*(data['FTHG'].values[x] - (data['THG'].values[x]+data['TG1'].values[x])/2)
-		if team==data['AwayTeam'].values[x]:
-			points = 1
-			if data['FTR'].values[x] == 'H':
-				points = -3
-			if data['FTR'].values[x] == 'A':
-				points = 3
-			data['LG2'].values[x] = LG
-			LG = LG*0.8 + points
-
-			data['ELOG2'].values[x] = elog
-			if data['AM'].values[x]!=0 and data['P2'].values[x]!=0:
-				elog = elog + 0.7*(data['FTAG'].values[x] - (data['TAG'].values[x]+data['TG2'].values[x])/2)
-
+data = data.fillna(0) # Fill NaN with zeros. Case of divide a number by zero
+			
 writer = pd.ExcelWriter("trainingData/outputMeans.xlsx", engine='xlsxwriter')
 data.to_excel(writer, index = False, header=True, sheet_name='Sheet1')  
 
@@ -388,24 +368,30 @@ def printAllTables(data, teamList):
 ---------MAKING THE DIFFERENT MODELS------------
 ------------------------------------------------'''
 
-def randomForest(data):
-	#We eliminate the first games as they are not very representative for the training
-	data = data.drop(range(0,91), axis=0) 
+noReprGames = 91 # Number of no-representative games. First N games will be deleted
+
+# Function to delete the first games of the training files as they are not very representative
+def deleteHeadToTrain(data, rows:int):
+	data = data.drop(range(0,rows), axis=0) 
 	for x in range(len(data.index)):
 		if data['HM'].values[x]<3 or data['P1'].values[x]<4 or data['AM'].values[x]<3 or data['P2'].values[x]<4:
-			data.drop(x, axis=0)
+			data.drop(x, axis=0)	
+	return data
 
-	#Variable to predict. Dependent variable
+def randomForest(data):
+	data = deleteHeadToTrain(data, noReprGames)
+
+	#Variables to predict. Dependent variables
 	Y = data['FTHG'].values
 	Y = Y.astype('int')
 	Y2 = data['FTAG'].values
 	Y2 = Y2.astype('int')
 
-	#Indepiendent variables
+	#Indepiendent variables. Can not have data of the actual match
 	X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','THS','TAS','THSA','TASA','TS1','TS2','TSA1','TSA2',
 	'THST','TAST','THSTA','TASTA','TST1','TST2','TSTA1','TSTA2','THC','TAC','THCA','TACA','TC1','TC2','TCA1','TCA2',
 	'THF','TAF','THFA','TAFA','TF1','TF2','TFA1','TFA2','THY','TAY','THYA','TAYA','TY1','TY2','TYA1','TYA2',
-	'THR','TAR','THRA','TARA','TR1','TR2','TRA1','TRA2','ELOG1','ELOG2','LG1','LG2']]
+	'THR','TAR','THRA','TARA','TR1','TR2','TRA1','TRA2','LG1','LG2']]
 	#X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','ELOG1', 'ELOG2','LG1','LG2']]
 	X2 = X
 	print("\n ---------------------------------")
@@ -415,6 +401,7 @@ def randomForest(data):
 	from sklearn.model_selection import train_test_split
 	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.06, random_state=20)
 	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.06, random_state=20)
+	print(X2_test)
 
 	from sklearn.ensemble import RandomForestRegressor
 	model = RandomForestRegressor(n_estimators=180, min_samples_leaf=2, min_samples_split=3, random_state=20)
@@ -446,10 +433,10 @@ def randomForest(data):
 		matches_prediction.append(match_data)
 		i=i+1
 
+	print("\nPredictions done to test the model: ")
 	df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
 	print (df_prediction)
 
-	#print best attributes
 	print("\nBest Attributes:")
 	feature_list = list(X.columns)
 	features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
@@ -463,7 +450,16 @@ def randomForest(data):
 
 	#data = data[:-10]
 
+def multilayerPerceptron(data):
+	print("\n ---------------------------------")
+	print("Making multilayer perceptron.............")
 
+print("Let's start! What do you want to do?")
+print("   1-Print league standings and statistics")
+print("   2-Get some predictions with AI\n")
+sel = int(input("Type a number from the ones above and hit enter: "))
 
-printTable(data, teamsList)
-randomForest(data)
+if sel==1:
+	printTable(data, teamsList)
+elif sel==2:
+	randomForest(data)

@@ -4,8 +4,6 @@ import pandas as pd
 from tkinter import *
 import sys
 
-from pandas.core.reshape.concat import concat
-
 class Team:   
 
     def __init__(self, name:str):           
@@ -83,7 +81,6 @@ data = pd.read_csv('db/2020/E0.csv')
 #data2 = pd.read_csv('db/2020/SP1.csv')
 #data = data.merge(data2, how='outer')
 #data = data.merge(data3, how='outer')
-original_data = data
 
 # Delete non-important attributes
 eliminate = [0,1,2] # Division, date and time
@@ -318,7 +315,9 @@ for atr in newAtr:
 		data[atr] = data[atr]/data['P2']
 
 data = data.fillna(0) # Fill NaN with zeros. Case of divide a number by zero
-			
+
+original_data = data
+
 writer = pd.ExcelWriter("trainingData/outputMeans.xlsx", engine='xlsxwriter')
 data.to_excel(writer, index = False, header=True, sheet_name='Sheet1')  
 
@@ -372,6 +371,7 @@ def printAllTables(data, teamList):
 ------------------------------------------------'''
 
 noReprGames = 91 # Number of no-representative games. First N games will be deleted
+test_size = 0.06 # % of matches used to size the accuracy of the model
 
 # Function to delete the first games of the training files as they are not very representative
 def deleteHeadToTrain(data, rows:int):
@@ -457,8 +457,40 @@ def newRowToTest(homeTeam:Team, awayTeam:Team):
 	newDf = newDf.fillna(0) # Fill NaN with zeros. Case of divide a number by zero
 	return newDf
 
-def randomForest(data):
-	data = deleteHeadToTrain(data, noReprGames)
+def printTestPredictions(X_test, prediction_test, prediction_test2, Y_test, Y2_test):
+	#Creating new dataframe to print the predictions
+	matches_prediction = []
+	i=0
+	for row in X_test.index:
+		if row != 9999:
+			match_data = []
+			match_data.append(original_data['HomeTeam'].values[row])
+			match_data.append(original_data['AwayTeam'].values[row])
+			match_data.append(prediction_test[i])
+			match_data.append(prediction_test2[i])
+			match_data.append(Y_test[i])
+			match_data.append(Y2_test[i])
+			match_data = tuple(match_data)
+			matches_prediction.append(match_data)
+			i=i+1
+
+	print("\nPredictions done to test the model: ")
+	df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
+	print (df_prediction)
+	print("\nHere are the matches used to measure the performance of the model. This is the test file, used in most ML models")
+
+def printBestAttr(X, model):
+	print("\nBest Attributes:")
+	feature_list = list(X.columns)
+	features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
+	print(features_imp.head())
+	print("\nWorst Attributes:")
+	print(features_imp.tail())
+
+# Function that determinate the varibles to predict
+# Return list with [Y,Y2,X]. Y and Y2 will be the two variable to predict, dependent on X
+def preModel():
+	data = deleteHeadToTrain(original_data, noReprGames)
 
 	#Variables to predict. Dependent variables
 	Y = data['FTHG'].values
@@ -472,14 +504,23 @@ def randomForest(data):
 	'THF','TAF','THFA','TAFA','TF1','TF2','TFA1','TFA2','THY','TAY','THYA','TAYA','TY1','TY2','TYA1','TYA2',
 	'THR','TAR','THRA','TARA','TR1','TR2','TRA1','TRA2','LG1','LG2']]
 	#X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','ELOG1', 'ELOG2','LG1','LG2']]
-	X2 = X
+	
+	return [Y,Y2,X]
+
+def randomForest():
+	variables = preModel()
+	Y = variables[0]
+	Y2 = variables[1]
+	X = variables[2]
+	X2 = variables[2]
+
 	print("\n ---------------------------------")
 	print("Making random forest.............\n")
 
 	#Split data into train and test datasets
 	from sklearn.model_selection import train_test_split
-	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.06, random_state=20)
-	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.06, random_state=20)
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=20)
+	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=test_size, random_state=20)
 
 	#Add match to predict
 	for index,team in enumerate(teamsList, start=1):
@@ -507,51 +548,25 @@ def randomForest(data):
 	print ("Mean sq. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2[:-1]),2)), "%")
 	#print ("Mean abs. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
 	
-	print("\nPrediction for " + str(teamsList[homeTeamToPredict-1].name) + ": " + str(prediction_test[-1]))
-	print("Prediction for " + str(teamsList[awayTeamToPredict-1].name) + ": " + str(prediction_test2[-1]))
+	print("\nPrediction for","{0:15}".format(str(teamsList[homeTeamToPredict-1].name) + ": "), '{:.2f}'.format(prediction_test[-1]))
+	print("Prediction for", "{0:15}".format(str(teamsList[awayTeamToPredict-1].name) + ": "), '{:.2f}'.format(prediction_test2[-1]))
 	
 	sel = '0'
-	while sel != 'q':
+	while sel != 'n':
 		print("\nDo you want to have more data of this model?")
 		print("   1-Yes, show me the predictions of the test file")
 		print("   2-Yes, show me the more relevant attributes of the tree")
 		print("   3-Yes, show me the generated trees")
-		print("   q-No, quit\n")
+		print("   n-No, quit\n")
 		sel = input("Type an option from the ones above and hit enter: ")
 		
-		if sel=='q':
+		if sel=='n':
 			return
 		sel = int(sel)
 		if sel==1:
-			#Creating new dataframe to print the predictions
-			matches_prediction = []
-			i=0
-			for row in X_test.index:
-				if row != 9999:
-					match_data = []
-					match_data.append(original_data['HomeTeam'].values[row])
-					match_data.append(original_data['AwayTeam'].values[row])
-					match_data.append(prediction_test[i])
-					match_data.append(prediction_test2[i])
-					match_data.append(Y_test[i])
-					match_data.append(Y2_test[i])
-					match_data = tuple(match_data)
-					matches_prediction.append(match_data)
-					i=i+1
-
-			print("\nPredictions done to test the model: ")
-			df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
-			print (df_prediction)
-			print("\nHere are the matches used to measure the performance of the model. This is the test file, used in most ML models")
-
+			printTestPredictions(X_test, prediction_test, prediction_test2, Y_test, Y2_test)
 		if sel==2:
-			print("\nBest Attributes:")
-			feature_list = list(X.columns)
-			features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
-			print(features_imp.head())
-			print("\nWorst Attributes:")
-			print(features_imp.tail())
-		
+			printBestAttr(X, model)		
 		if sel==3:
 			print_decision_rules(model)
 
@@ -582,10 +597,64 @@ def print_decision_rules(rf):
             else:
                 print('{} NODE: if feature[{}] < {} then next={} else next={}'.format(node_idx, feature, th, left, right))    
 
+def multilayerPerceptron():
+	variables = preModel()
+	Y = variables[0]
+	Y2 = variables[1]
+	X = variables[2]
+	X2 = variables[2]
 
-def multilayerPerceptron(data):
 	print("\n ---------------------------------")
-	print("Making multilayer perceptron.............")
+	print("Making multilayer perceptron.............\n")
+
+	#Split data into train and test datasets
+	from sklearn.model_selection import train_test_split
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=20)
+	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=test_size, random_state=20)
+
+	#Add match to predict
+	for index,team in enumerate(teamsList, start=1):
+		print(index, team.name)
+	homeTeamToPredict = int(input("Select the home team number: "))
+	awayTeamToPredict = int(input("Select the away team number: "))
+	newDf = newRowToTest(teamsList[homeTeamToPredict-1], teamsList[awayTeamToPredict-1])
+	X_test = pd.concat([X_test, newDf])
+	X2_test = pd.concat([X2_test, newDf])
+
+	#Get the model
+	from sklearn.neural_network import MLPRegressor
+	model = MLPRegressor(random_state=20, max_iter=5000, hidden_layer_sizes=100, activation='tanh')
+
+	model.fit(X_train, Y_train)
+	prediction_test = model.predict(X_test) #Results of the predictions in a list[]
+
+	model.fit(X2_train, Y2_train)
+	prediction_test2 = model.predict(X2_test)
+	
+	from sklearn import metrics
+	# We have to do [:-1] to delete the last row that we introduced manually.
+	print ("\nMean sq. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test[:-1]),2)), "%")
+	#print ("Mean abs. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
+	print ("Mean sq. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2[:-1]),2)), "%")
+	#print ("Mean abs. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+	
+	print("\nPrediction for","{0:15}".format(str(teamsList[homeTeamToPredict-1].name) + ": "), '{:.2f}'.format(prediction_test[-1]))
+	print("Prediction for", "{0:15}".format(str(teamsList[awayTeamToPredict-1].name) + ": "), '{:.2f}'.format(prediction_test2[-1]))
+
+	sel = '0'
+	while sel != 'n':
+		print("\nDo you want to have more data of this model?")
+		print("   1-Yes, show me the predictions of the test file")
+		print("   n-No, quit\n")
+		sel = input("Type an option from the ones above and hit enter: ")
+		
+		if sel=='n':
+			return
+		sel = int(sel)
+		if sel==1:
+			printTestPredictions(X_test, prediction_test, prediction_test2, Y_test, Y2_test)
+		if sel==2:
+			pass
 
 print("Let's start! What do you want to do?")
 selContinue = 'y'
@@ -626,9 +695,9 @@ while selContinue != 'n':
 		if sel2 != 'q':
 			sel2 = int(sel2)
 			if sel2 == 1:
-				randomForest(data)
+				randomForest()
 			elif sel2 == 2:
-				multilayerPerceptron(data)
+				multilayerPerceptron()
 
 	selContinue = input("Done! Any other operation (y/n): ")
 	if selContinue=='n':

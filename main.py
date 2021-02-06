@@ -1,6 +1,10 @@
 from numpy import delete
+import numpy
 import pandas as pd
 from tkinter import *
+import sys
+
+from pandas.core.reshape.concat import concat
 
 class Team:   
 
@@ -355,7 +359,6 @@ def printAwayTable(data, teamList):
 
 	print("")
 
-
 def printAllTables(data, teamList):
 	print("HOME TABLE:\n")
 	printHomeTable(data, teamsList)
@@ -378,6 +381,82 @@ def deleteHeadToTrain(data, rows:int):
 			data.drop(x, axis=0)	
 	return data
 
+# Function to generate a new row (a new match) at the end of the test file, to predict the user desire.
+# Return a new df with only one row, that will be concatenated with the test df
+def newRowToTest(homeTeam:Team, awayTeam:Team):
+	newDf = pd.DataFrame(
+		{
+			'THG': [homeTeam.HGF/homeTeam.HM],
+			'THGA': [homeTeam.HGA/homeTeam.HM],
+			'TG1': [homeTeam.GF/homeTeam.M],
+			'TGA1': [homeTeam.GA/homeTeam.M],
+			'TAG': [awayTeam.AGF/awayTeam.AM],
+			'TAGA': [awayTeam.AGA/awayTeam.AM],
+			'TG2': [awayTeam.GF/awayTeam.M],
+			'TGA2': [awayTeam.GA/awayTeam.M],
+
+			'THS': [homeTeam.HSF/homeTeam.HM],
+			'THSA': [homeTeam.HSA/homeTeam.HM],
+			'TS1': [homeTeam.SF/homeTeam.M],
+			'TSA1': [homeTeam.SA/homeTeam.M],
+			'TAS': [awayTeam.ASF/awayTeam.AM],
+			'TASA': [awayTeam.ASA/awayTeam.AM],
+			'TS2': [awayTeam.SF/awayTeam.M],
+			'TSA2': [awayTeam.SA/awayTeam.M],
+
+			'THST': [homeTeam.HSTF/homeTeam.HM],
+			'THSTA': [homeTeam.HSTA/homeTeam.HM],
+			'TST1': [homeTeam.STF/homeTeam.M],
+			'TSTA1': [homeTeam.STA/homeTeam.M],
+			'TAST': [awayTeam.ASTF/awayTeam.AM],
+			'TASTA': [awayTeam.ASTA/awayTeam.AM],
+			'TST2': [awayTeam.STF/awayTeam.M],
+			'TSTA2': [awayTeam.STA/awayTeam.M],
+
+			'THC': [homeTeam.HCF/homeTeam.HM],
+			'THCA': [homeTeam.HCA/homeTeam.HM],
+			'TC1': [homeTeam.CF/homeTeam.M],
+			'TCA1': [homeTeam.CA/homeTeam.M],
+			'TAC': [awayTeam.ACF/awayTeam.AM],
+			'TACA': [awayTeam.ACA/awayTeam.AM],
+			'TC2': [awayTeam.CF/awayTeam.M],
+			'TCA2': [awayTeam.CA/awayTeam.M],
+
+			'THF': [homeTeam.HFF/homeTeam.HM],
+			'THFA': [homeTeam.HFA/homeTeam.HM],
+			'TF1': [homeTeam.FF/homeTeam.M],
+			'TFA1': [homeTeam.FA/homeTeam.M],
+			'TAF': [awayTeam.AFF/awayTeam.AM],
+			'TAFA': [awayTeam.AFA/awayTeam.AM],
+			'TF2': [awayTeam.FF/awayTeam.M],
+			'TFA2': [awayTeam.FA/awayTeam.M],
+
+			'THY': [homeTeam.HYF/homeTeam.HM],
+			'THYA': [homeTeam.HYA/homeTeam.HM],
+			'TY1': [homeTeam.YF/homeTeam.M],
+			'TYA1': [homeTeam.YA/homeTeam.M],
+			'TAY': [awayTeam.AYF/awayTeam.AM],
+			'TAYA': [awayTeam.AYA/awayTeam.AM],
+			'TY2': [awayTeam.YF/awayTeam.M],
+			'TYA2': [awayTeam.YA/awayTeam.M],
+
+			'THR': [homeTeam.HRF/homeTeam.HM],
+			'THRA': [homeTeam.HRA/homeTeam.HM],
+			'TR1': [homeTeam.RF/homeTeam.M],
+			'TRA1': [homeTeam.RA/homeTeam.M],
+			'TAR': [awayTeam.ARF/awayTeam.AM],
+			'TARA': [awayTeam.ARA/awayTeam.AM],
+			'TR2': [awayTeam.RF/awayTeam.M],
+			'TRA2': [awayTeam.RA/awayTeam.M],
+
+			'LG1': [homeTeam.LG],
+			'LG2': [awayTeam.LG]
+		},
+		index=[9999],
+	)
+	newDf = newDf.fillna(0) # Fill NaN with zeros. Case of divide a number by zero
+	return newDf
+
 def randomForest(data):
 	data = deleteHeadToTrain(data, noReprGames)
 
@@ -395,14 +474,23 @@ def randomForest(data):
 	#X = data[['THG','TAG','THGA','TAGA','TG1','TG2','TGA1','TGA2','ELOG1', 'ELOG2','LG1','LG2']]
 	X2 = X
 	print("\n ---------------------------------")
-	print("Making random forest.............")
+	print("Making random forest.............\n")
 
 	#Split data into train and test datasets
 	from sklearn.model_selection import train_test_split
 	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.06, random_state=20)
 	X2_train, X2_test, Y2_train, Y2_test = train_test_split(X2, Y2, test_size=0.06, random_state=20)
-	print(X2_test)
 
+	#Add match to predict
+	for index,team in enumerate(teamsList, start=1):
+		print(index, team.name)
+	homeTeamToPredict = int(input("Select the home team number: "))
+	awayTeamToPredict = int(input("Select the away team number: "))
+	newDf = newRowToTest(teamsList[homeTeamToPredict-1], teamsList[awayTeamToPredict-1])
+	X_test = pd.concat([X_test, newDf])
+	X2_test = pd.concat([X2_test, newDf])
+
+	#Get the model
 	from sklearn.ensemble import RandomForestRegressor
 	model = RandomForestRegressor(n_estimators=180, min_samples_leaf=2, min_samples_split=3, random_state=20)
 
@@ -411,55 +499,138 @@ def randomForest(data):
 
 	model.fit(X2_train, Y2_train)
 	prediction_test2 = model.predict(X2_test)
-
+	
 	from sklearn import metrics
-	print ("Mean sq. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test),2)), "%")
-	print ("Mean abs. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
-	print ("Mean sq. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2),2)), "%")
-	print ("Mean abs. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+	# We have to do [:-1] to delete the last row that we introduced manually.
+	print ("\nMean sq. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y_test, prediction_test[:-1]),2)), "%")
+	#print ("Mean abs. error for the home team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y_test, prediction_test),2)), "%")
+	print ("Mean sq. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_squared_error(Y2_test, prediction_test2[:-1]),2)), "%")
+	#print ("Mean abs. error for the away team->", '{:.2f}'.format(100*round(metrics.mean_absolute_error(Y2_test, prediction_test2),2)), "%")
+	
+	print("\nPrediction for " + str(teamsList[homeTeamToPredict-1].name) + ": " + str(prediction_test[-1]))
+	print("Prediction for " + str(teamsList[awayTeamToPredict-1].name) + ": " + str(prediction_test2[-1]))
+	
+	sel = '0'
+	while sel != 'q':
+		print("\nDo you want to have more data of this model?")
+		print("   1-Yes, show me the predictions of the test file")
+		print("   2-Yes, show me the more relevant attributes of the tree")
+		print("   3-Yes, show me the generated trees")
+		print("   q-No, quit\n")
+		sel = input("Type an option from the ones above and hit enter: ")
+		
+		if sel=='q':
+			return
+		sel = int(sel)
+		if sel==1:
+			#Creating new dataframe to print the predictions
+			matches_prediction = []
+			i=0
+			for row in X_test.index:
+				if row != 9999:
+					match_data = []
+					match_data.append(original_data['HomeTeam'].values[row])
+					match_data.append(original_data['AwayTeam'].values[row])
+					match_data.append(prediction_test[i])
+					match_data.append(prediction_test2[i])
+					match_data.append(Y_test[i])
+					match_data.append(Y2_test[i])
+					match_data = tuple(match_data)
+					matches_prediction.append(match_data)
+					i=i+1
 
-	#Creating new dataframe to print the predictions
-	matches_prediction = []
-	i=0
-	for row in X_test.index:
-		match_data = []
-		match_data.append(original_data['HomeTeam'].values[row])
-		match_data.append(original_data['AwayTeam'].values[row])
-		match_data.append(prediction_test[i])
-		match_data.append(prediction_test2[i])
-		match_data.append(Y_test[i])
-		match_data.append(Y2_test[i])
-		match_data = tuple(match_data)
-		matches_prediction.append(match_data)
-		i=i+1
+			print("\nPredictions done to test the model: ")
+			df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
+			print (df_prediction)
+			print("\nHere are the matches used to measure the performance of the model. This is the test file, used in most ML models")
 
-	print("\nPredictions done to test the model: ")
-	df_prediction = pd.DataFrame(matches_prediction, columns=['HomeTeam', 'AwayTeam', 'PHG', 'PAG','RHG', 'RAG'])
-	print (df_prediction)
+		if sel==2:
+			print("\nBest Attributes:")
+			feature_list = list(X.columns)
+			features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
+			print(features_imp.head())
+			print("\nWorst Attributes:")
+			print(features_imp.tail())
+		
+		if sel==3:
+			print_decision_rules(model)
 
-	print("\nBest Attributes:")
-	feature_list = list(X.columns)
-	features_imp = pd.Series(model.feature_importances_, index=feature_list).sort_values(ascending=False)
-	print(features_imp.head())
-	print("\nWorst Attributes:")
-	print(features_imp.tail())
+# Function to print the trees generates in randomForest
+def print_decision_rules(rf):
 
-	print("----------------------------------------")
-	print("----------------ENDING------------------")
-	print("----------------------------------------")
+    for tree_idx, est in enumerate(rf.estimators_):
+        tree = est.tree_
+        assert tree.value.shape[1] == 1 # no support for multi-output
 
-	#data = data[:-10]
+        print('TREE: {}'.format(tree_idx))
+
+        iterator = enumerate(zip(tree.children_left, tree.children_right, tree.feature, tree.threshold, tree.value))
+        for node_idx, data in iterator:
+            left, right, feature, th, value = data
+
+            # left: index of left child (if any)
+            # right: index of right child (if any)
+            # feature: index of the feature to check
+            # th: the threshold to compare against
+            # value: values associated with classes            
+
+            # for classifier, value is 0 except the index of the class to return
+            class_idx = numpy.argmax(value[0])
+
+            if left == -1 and right == -1:
+                print('{} LEAF: return class={}'.format(node_idx, class_idx))
+            else:
+                print('{} NODE: if feature[{}] < {} then next={} else next={}'.format(node_idx, feature, th, left, right))    
+
 
 def multilayerPerceptron(data):
 	print("\n ---------------------------------")
 	print("Making multilayer perceptron.............")
 
 print("Let's start! What do you want to do?")
-print("   1-Print league standings and statistics")
-print("   2-Get some predictions with AI\n")
-sel = int(input("Type a number from the ones above and hit enter: "))
+selContinue = 'y'
+while selContinue != 'n':
+	print("   1-Print league standings and statistics")
+	print("   2-Get some predictions with AI")
+	print("   q-Quit the program\n")
+	sel = input("Type an option from the ones above and hit enter: ")
 
-if sel==1:
-	printTable(data, teamsList)
-elif sel==2:
-	randomForest(data)
+	if sel=='q':
+		sys.exit()
+
+	sel = int(sel)
+	if sel==1:
+		print("What do you want me to show you?")
+		print("   1-Print league clasification")
+		print("   2-Print league clasification (Only home matches)")
+		print("   3-Print league clasification (Only away matches)")
+		print("   123-Print the 3 clasifications of above")
+		print("   q-Return/Quit\n")
+		sel2 = input("Type an option from the ones above and hit enter: ")
+		if sel2 != 'q':
+			sel2 = int(sel2)
+			if sel2 == 1:
+				printTable(data, teamsList)
+			elif sel2 == 2:
+				printHomeTable(data, teamsList)
+			elif sel2 == 3:
+				printAwayTable(data,teamsList)
+			elif sel2 == 123:
+				printAllTables(data, teamsList)
+	elif sel==2:
+		print("What model do you want to use?")
+		print("   1-Random Forest")
+		print("   2-Multilayer Perceptron (not implemented yet)")
+		print("   q-Return/Quit\n")
+		sel2 = input("Type an option from the ones above and hit enter: ")
+		if sel2 != 'q':
+			sel2 = int(sel2)
+			if sel2 == 1:
+				randomForest(data)
+			elif sel2 == 2:
+				multilayerPerceptron(data)
+
+	selContinue = input("Done! Any other operation (y/n): ")
+	if selContinue=='n':
+		print("\nAllright, been a pleasure!\n")
+		sys.exit()

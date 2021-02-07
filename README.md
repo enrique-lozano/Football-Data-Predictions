@@ -31,28 +31,30 @@ python3 main.py
 
 **Warning:** _This project has been fully developed in python 3.9, so its operation for previous versions is not guaranteed._
 
-## Extra sections
-
-Here you can add all the sections that occur to you in relation to your project. Some examples are:
-
--   Usage example 💡
--   Where the data is stored? 🕵️
--   What is the X Algorithm? 🧠
-
 ## For developers 💻
 
-In this section we will put the extra commands and tasks that people who want to collaborate in the project will have to perform. For example, installation of programs, packages, dependencies ...
+Most of the models used are based on the same pandas dataframe. This dataframe is made up of a series of rows, each with a series of attributes (columns). These attributes can be divided into two types:
 
-```sh
-make example
-npm test
-```
+-   **Attributes of the current match:** Used by the models to measure errors and check their effectiveness. They will be the attributes to predict. They are located in the first columns of the dataframe.
+-   **Attributes before the game:** Data available from the teams before the start of the game. Used to try to predict the attributes of the previous type described. For example, if a team has many goals in favor before a match, it is likely that in that same match (same row) the attribute indicating the number of goals scored by that team in that match is also high.
 
-And later, install the package in https://example.com and run
+Thus, dataframes are made up of this combination of matches and attributes. For the best visualization of the dataframes, they are exported in an external folder called _trainingData_. The absolute data appears in the output.csv file, however, for all the models a conversion of the attributes is carried out, taking the average of them as a function of the number of games played.
 
-```sh
-make example2
-```
+In addition, the first matches of the dataframe have to be eliminated, because the averages still give uncertain values. As in any automatic learning process, the dataframe will be divided into test and training files, being able to select the percentage of matches dedicated to the test.
+
+## The Algorithms 🧠
+
+### Random Forest
+
+A number N of decision trees is generated. These trees are formed by a series of leaves or rules, and in their final leaf, they will launch a prediction. The final prediction will consist of the arithmetic mean of the predictions made by the N trees.
+
+<img src="/screenshots/sc1.png" alt="Screenshot 1" width="50%" height="50%" />
+
+### Multilayer Preceptron
+
+It is one of the simplest neural network models, made up of an input layer, an output layer, and N hidden layers or intermediate layers. Each layer will have a certain number of neurons and connections, each of which has a specific weight.
+
+<img src="/screenshots/sc2.png" alt="Screenshot 1" width="50%" height="50%" />
 
 ## Next updates (To do list) 🔜
 

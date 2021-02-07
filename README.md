@@ -48,7 +48,7 @@ In addition, the first matches of the dataframe have to be eliminated, because t
 
 A number N of decision trees is generated. These trees are formed by a series of leaves or rules, and in their final leaf, they will launch a prediction. The final prediction will consist of the arithmetic mean of the predictions made by the N trees.
 
-<img src="/screenshots/sc1.png" alt="Screenshot 1" width="50%" height="50%" />
+<img src="/screenshots/sc1.PNG" alt="Screenshot 1" width="50%" height="50%" />
 
 ### Multilayer Preceptron
 
@@ -64,10 +64,6 @@ It is one of the simplest neural network models, made up of an input layer, an o
 -   Allow the user to select the parameters of certain models
 -   Who knows, maybe a graphical interface?
 
-## Issues 🤕
-
-(if necessary)
-
 ## Want to collaborate? 🙋🏻
 
 Feel free to improve and optimize the existing code. To contribute to the project, read the previous points carefully and do the next steps with the project:
@@ -81,33 +77,3 @@ Feel free to improve and optimize the existing code. To contribute to the projec
 ## Need help ❓
 
 Feel free to contact the developer if you have any questions or suggestions about the project or how you can help with it.
-
-## Screenshots 📸
-
-Some screenshots of the project working if necessary:
-
-<img src="/screenshots/sc1.png" alt="Screenshot 1" width="50%" height="50%" />
-
-## -----------EXTRA CONTENT---------
-
-### Beautiful commits
-
-Emojis make everything nice, so you just have to include one of these in each of the commits you make:
-
-> Translation improvements 🔣
-
-> Code optimizations 🛠️
-
-> Improved functionality 🛠️
-
-> Working in XXX 🛠️
-
-> Functionality implemented ✔️
-
-> Class/File added ✔️
-
-> Design improvements ✏️
-
-> App deploy updated 🚀
-
-> New release 🚀

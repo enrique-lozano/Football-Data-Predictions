@@ -54,9 +54,13 @@ And later, install the package in https://example.com and run
 make example2
 ```
 
-## Next updates 🔜
+## Next updates (To do list) 🔜
 
-(if necessary)
+-   Improve the flow of elections through the interface
+-   More artificial intelligence algorithms
+-   More options to print the statistics and sort the classifications by attributes such as goals, corners ...
+-   Allow the user to select the parameters of certain models
+-   Who knows, maybe a graphical interface?
 
 ## Issues 🤕
 

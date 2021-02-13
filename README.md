@@ -61,7 +61,8 @@ It is one of the simplest neural network models, made up of an input layer, an o
 -   Improve the flow of elections through the interface
 -   More artificial intelligence algorithms
 -   More options to print the statistics and sort the classifications by attributes such as goals, corners ...
--   Allow the user to select the parameters of certain models
+-   Allow users to select the parameters of certain AI models
+-   Allow users to select what they want to predict, and not only predict goals (predict shots, corners...)
 -   Who knows, maybe a graphical interface?
 
 ## Want to collaborate? 🙋🏻

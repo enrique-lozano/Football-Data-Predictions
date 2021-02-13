@@ -1,8 +1,8 @@
-from numpy import delete
 import numpy
 import pandas as pd
 from tkinter import *
 import sys
+import math # Only used for e^x and the factorial
 
 class Team:   
 
@@ -91,16 +91,6 @@ for x in range(23, len(data.columns)):
 
 #data.drop(['B365CA', 'B365CH', 'B365CD', '', '', '', ''], axis=1)
 data = data.drop(data.columns[eliminate], axis=1)  # data.columns is zero-based pd.Index 
-
-#New matches added to predict
-'''
-new_row = []
-for i in range(len(data.columns)):
-	new_row.append(0)
-new_row[0] = "Barcelona"
-new_row[1] = "Real Madrid"
-data.loc[len(data)] = new_row
-'''
 
 #Matches
 data['P1'] = 0
@@ -507,6 +497,43 @@ def preModel():
 	
 	return [Y,Y2,X]
 
+# Return the probability of X according to the Poisson Distribution
+def poissonDistr(mean:float, X:int):
+	result = math.exp((-1)*mean) * (mean**X)
+	result = result / math.factorial(X)
+	return result
+
+#This is not AI. Thanks to https://www.sbo.net/strategy/football-prediction-model-poisson-distribution/
+def teamStrenghtsModel():
+	total_matches = 0
+	total_home = 0
+	total_away = 0
+	#Select the teams to predict and get the means
+	for index,team in enumerate(teamsList, start=1):
+		print(index, team.name)
+		total_matches = total_matches + team.M
+		total_home = total_home + team.HGF
+		total_away = total_away + team.AGF
+	mean_home = total_home/total_matches
+	mean_away = total_away/total_matches
+	homeTeamToPredict = int(input("Select the home team number: "))
+	awayTeamToPredict = int(input("Select the away team number: "))
+	homeTeam = teamsList[homeTeamToPredict-1]
+	awayTeam = teamsList[awayTeamToPredict-1]
+
+	#Get the strenghts
+	homeTeamAtt = (homeTeam.HGF/team.HM) / mean_home
+	homeTeamDef = (homeTeam.HGA/team.HM) / mean_away
+	awayTeamAtt = (awayTeam.AGF/team.AM) / mean_away
+	awayTeamDef = (awayTeam.AGA/team.AM) / mean_home
+
+	#Predictions
+	homePredict = homeTeamAtt*awayTeamDef*mean_home
+	awayPredict = awayTeamAtt*homeTeamDef*mean_away
+	print("\nPrediction for","{0:15}".format(str(teamsList[homeTeamToPredict-1].name) + ": "), '{:.2f}'.format(homePredict))
+	print("Prediction for", "{0:15}".format(str(teamsList[awayTeamToPredict-1].name) + ": "), '{:.2f}'.format(awayPredict))
+
+
 def randomForest():
 	variables = preModel()
 	Y = variables[0]
@@ -689,7 +716,8 @@ while selContinue != 'n':
 	elif sel==2:
 		print("What model do you want to use?")
 		print("   1-Random Forest")
-		print("   2-Multilayer Perceptron (not implemented yet)")
+		print("   2-Multilayer Perceptron")
+		print("   3-Team Strenghts Model")
 		print("   q-Return/Quit\n")
 		sel2 = input("Type an option from the ones above and hit enter: ")
 		if sel2 != 'q':
@@ -698,6 +726,8 @@ while selContinue != 'n':
 				randomForest()
 			elif sel2 == 2:
 				multilayerPerceptron()
+			elif sel2 == 3:
+				teamStrenghtsModel()
 
 	selContinue = input("Done! Any other operation (y/n): ")
 	if selContinue=='n':

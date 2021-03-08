@@ -4,11 +4,9 @@ Python script that shows statistics and predictions about different European soc
 
 ## Run it 🚀
 
-First, run <code>git clone</code> or dowload the project in any directory of your machine. The data files are extracted from https://www.football-data.co.uk/data.php. **Data is not updated automatically**, so if you want to get current predictions and statistics you will have to manually enter these files in the project. The same goes for leagues/seasons that are not included in the project db folder. The only condition is that once this operation is done, you update the following line of code in the **_main.py_** file and put the location of your new file:
+First, run <code>git clone</code> or dowload the project in any directory of your machine. The data files are extracted from https://www.football-data.co.uk/data.php and are updated automatically.
 
-> data = pd.read_csv('db/your_file.csv')
-
-Once you do that, you should install some dependencies via _pip_, in the case that you haven't installed them yet:
+Before you start, you should install some dependencies via _pip_, in the case that you haven't installed them yet:
 
 ```sh
 pip install pandas

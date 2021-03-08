@@ -76,11 +76,38 @@ print ("--------------------")
 print ("This code has been fully developed by enriqueloz88. Despite being an open source project, its use for commercial purposes without my express authorization is not allowed.")
 print ("--------------------\n")
 
-data = pd.read_csv('db/2020/E0.csv')
-#data = pd.read_csv('input2.csv')
-#data2 = pd.read_csv('db/2020/SP1.csv')
-#data = data.merge(data2, how='outer')
-#data = data.merge(data3, how='outer')
+print("First, select your league: ")
+print("   1-England - Premier League")
+print("   2-Spain - La Liga")
+print("   3-Italy - Serie A")
+print("   4-France - Ligue 1")
+print("   5-Germany - Bundesliga")
+print("   q-Quit the program\n")
+
+league = input("Type an option from the ones above and hit enter: ")
+print("\nOkay, now you have to choose the year of the competition. For example, if you type 2020, the selected league will be the season 2019/2020")
+year = input("Type a year and hit enter: ")
+
+if league=="1":
+	league = "E0.csv"
+if league=="2":
+	league = "SP1.csv"
+if league=="3":
+	league = "I1.csv"
+if league=="4":
+	league = "F1.csv"
+if league=="5":
+	league = "D1.csv"
+
+url = 'https://www.football-data.co.uk/mmz4281/' + year + '/' + league
+data = pd.read_csv(url)
+
+'''
+data = pd.read_csv('input2.csv')
+data2 = pd.read_csv('db/2020/SP1.csv')
+data = data.merge(data2, how='outer')
+data = data.merge(data3, how='outer')
+'''
 
 # Delete non-important attributes
 eliminate = [0,1,2] # Division, date and time

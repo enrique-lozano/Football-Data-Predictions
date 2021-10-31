@@ -2,7 +2,9 @@ import numpy
 import pandas as pd
 from tkinter import *
 import sys
-import math # Only used for e^x and the factorial
+import math
+
+from pandas.core.frame import DataFrame # Only used for e^x and the factorial
 
 class Team:   
 
@@ -85,19 +87,24 @@ print("   5-Germany - Bundesliga")
 print("   q-Quit the program\n")
 
 league = input("Type an option from the ones above and hit enter: ")
-print("\nOkay, now you have to choose the year of the competition. For example, if you type 2020, the selected league will be the season 2019/2020")
-year = input("Type a year and hit enter: ")
 
 if league=="1":
 	league = "E0.csv"
-if league=="2":
+elif league=="2":
 	league = "SP1.csv"
-if league=="3":
+elif league=="3":
 	league = "I1.csv"
-if league=="4":
+elif league=="4":
 	league = "F1.csv"
-if league=="5":
+elif league=="5":
 	league = "D1.csv"
+
+print("\nOkay, now you have to choose the years of the competition, in a XXYY format. For example, if you type 2021, the selected league will be the season 2020-2021, if you type 1213 will be 2012-2012 and if you type 0203 will be 2002-2003")
+year = input("Type a year and hit enter: ")
+
+while(len(year) != 4):
+	print("It seems that you have not entered the year correctly, remember that this must be a 4-digit number")
+	year = input("Type a year and hit enter: ")
 
 url = 'https://www.football-data.co.uk/mmz4281/' + year + '/' + league
 data = pd.read_csv(url)
@@ -391,7 +398,7 @@ noReprGames = 91 # Number of no-representative games. First N games will be dele
 test_size = 0.06 # % of matches used to size the accuracy of the model
 
 # Function to delete the first games of the training files as they are not very representative
-def deleteHeadToTrain(data, rows:int):
+def deleteHeadToTrain(data:DataFrame, rows:int):
 	data = data.drop(range(0,rows), axis=0) 
 	for x in range(len(data.index)):
 		if data['HM'].values[x]<3 or data['P1'].values[x]<4 or data['AM'].values[x]<3 or data['P2'].values[x]<4:
@@ -733,13 +740,13 @@ while selContinue != 'n':
 		if sel2 != 'q':
 			sel2 = int(sel2)
 			if sel2 == 1:
-				printTable(data, teamsList)
+				printTable(original_data, teamsList)
 			elif sel2 == 2:
-				printHomeTable(data, teamsList)
+				printHomeTable(original_data, teamsList)
 			elif sel2 == 3:
-				printAwayTable(data,teamsList)
+				printAwayTable(original_data,teamsList)
 			elif sel2 == 123:
-				printAllTables(data, teamsList)
+				printAllTables(original_data, teamsList)
 	elif sel==2:
 		print("What model do you want to use?")
 		print("   1-Random Forest")
